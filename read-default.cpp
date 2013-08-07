@@ -29,12 +29,15 @@ int main(int argc, char* argv[]) {
   std::ifstream infile(ifname);
   
   // If there is no output file from DeFault, exit
-  if (!infile.is_open())
+  if (!infile.is_open()) {
+    std::cerr<<"Input file "<<ifname<<" not found!"<<std::endl;
     return 0;
+  }
 
   if (line.compare(sol_str)==0) {      
     // Start to read solutions line by line until the next incomplete features string
     while (std::getline(infile, line) && line.find(inc_str) == std::string::npos) {
+      std::cout<<line<<std::endl;
       std::stringstream ss(line);
       double time; size_t nodes, len; double fail_prob, eval_time;
       ss >> time >> nodes >> len >> fail_prob >> eval_time;
@@ -51,19 +54,33 @@ int main(int argc, char* argv[]) {
     std::string ofname(argv[3]);
     if (ofname.at(ofname.length()-1)!='/')
       ofname += "/";
-    ofname += argv[4]; 
-    std::ofstream outfile(ofname);
-  
-    // Comments
-    outfile<<"# DeFault:  java -jar default-1.0.0.jar testfiles/incomplete/garland.pddl testfiles/incomplete/garlandprob1.pddl dan.out  pode2 anytime strict 5"<<std::endl;
-    // Headers
-    outfile<<"domain,problem,plan_id,plan_length,plan_robustness,total_time"<<std::endl;
+    ofname += argv[4];
+    std::cout<<ofname<<std::endl;
+    // Check if output file exists
+    bool file_exists = false;
+    std::ifstream testfile(ofname);
+    if (testfile.is_open()) {
+      file_exists = true;
+      testfile.close();
+    }
+    std::cout<<"Writing file "<<ofname<<std::endl;
+
+    std::ofstream outfile;
+    if (!file_exists) {
+      outfile.open(ofname);
+      // Comments
+      outfile<<"# DeFault:  java -jar default-1.0.0.jar testfiles/incomplete/garland.pddl testfiles/incomplete/garlandprob1.pddl dan.out  pode2 anytime strict 5"<<std::endl;
+      // Headers
+      outfile<<"domain,problem,plan_id,plan_length,plan_robustness,total_time"<<std::endl;
+    }
+    else 
+      outfile.open(ofname, std::ofstream::app);
+
     std::string domain(argv[5]);
     std::string problem(argv[6]);
     // Solution plan, each on a line. Attributes not available are -1
     for (size_t i=0; i<sols.size(); i++) {
-      outfile<<domain<<","<<problem<<","<<i+1<<","<<sols[i].length<<","<<1.0-sols[i].fail_prob<<","<<sols[i].time;
-      if (i < sols.size()-1) outfile<<std::endl;
+      outfile<<domain<<","<<problem<<","<<i+1<<","<<sols[i].length<<","<<1.0-sols[i].fail_prob<<","<<sols[i].time<<std::endl;
     }
     // Close the output file
     outfile.close();
