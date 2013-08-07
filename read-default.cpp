@@ -25,28 +25,22 @@ int main(int argc, char* argv[]) {
   std::string time_str("Total Time (s):");
 
   std::vector<SOL> sols;
-  double total_time = -1; // default unavailable value
-
   std::string line;
   std::ifstream infile(ifname);
+  
+  // If there is no output file from DeFault, exit
+  if (!infile.is_open())
+    return 0;
 
-  while (std::getline(infile, line)) {
-    if (line.compare(sol_str)==0) {      
-      // Start to read solutions line by line until the next incomplete features string
-      while (std::getline(infile, line) && line.find(inc_str) == std::string::npos) {
-	  std::stringstream ss(line);
-	  double time; size_t nodes, len; double fail_prob, eval_time;
-	  ss >> time >> nodes >> len >> fail_prob >> eval_time;
-	  SOL sol;
-	  sol.time = time; sol.length = len; sol.fail_prob = fail_prob;
-	  sols.push_back(sol);
-      }
-    }
-    else {
-      if (line.find(time_str) != std::string::npos) {
-	total_time = atof(line.substr(time_str.length()).c_str());
-	std::cout<<"Total time: "<<total_time<<std::endl;
-      }
+  if (line.compare(sol_str)==0) {      
+    // Start to read solutions line by line until the next incomplete features string
+    while (std::getline(infile, line) && line.find(inc_str) == std::string::npos) {
+      std::stringstream ss(line);
+      double time; size_t nodes, len; double fail_prob, eval_time;
+      ss >> time >> nodes >> len >> fail_prob >> eval_time;
+      SOL sol;
+      sol.time = time; sol.length = len; sol.fail_prob = fail_prob;
+      sols.push_back(sol);
     }
   }
   // Close the input file
@@ -60,6 +54,8 @@ int main(int argc, char* argv[]) {
     ofname += argv[4]; 
     std::ofstream outfile(ofname);
   
+    // Comments
+    outfile<<"# DeFault:  java -jar default-1.0.0.jar testfiles/incomplete/garland.pddl testfiles/incomplete/garlandprob1.pddl dan.out  pode2 anytime strict 5"<<std::endl;
     // Headers
     outfile<<"domain,problem,plan_id,plan_length,plan_robustness,total_time"<<std::endl;
     std::string domain(argv[5]);
