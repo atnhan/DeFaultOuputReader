@@ -11,8 +11,8 @@ struct SOL {
 };
 
 int main(int argc, char* argv[]) {
-  if (argc != 5) {
-    std::cout<<"Usage: input-path input-file output-path output-file"<<std::endl;
+  if (argc != 7) {
+    std::cout<<"Usage: input-path input-file output-path output-file domain problem"<<std::endl;
     exit(1);
   }
   std::string ifname(argv[1]);
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
   std::string time_str("Total Time (s):");
 
   std::vector<SOL> sols;
-  double total_time = 0;
+  double total_time = -1; // default unavailable value
 
   std::string line;
   std::ifstream infile(ifname);
@@ -50,12 +50,27 @@ int main(int argc, char* argv[]) {
     }
   }
   // Close the input file
-  std::string ofname(argv[3]);
-  if (ofname.at(ofname.length()-1)!='/')
-    ofname += "/";
-  ofname += argv[4];  
-
-  // Write to the output file
-  std::ofstream outfile(ofname);
+  infile.close();
+ 
+  if (!sols.empty()) {
+    // Write to the output file in csv format
+    std::string ofname(argv[3]);
+    if (ofname.at(ofname.length()-1)!='/')
+      ofname += "/";
+    ofname += argv[4]; 
+    std::ofstream outfile(ofname);
   
+    // Headers
+    outfile<<"domain,problem,plan_id,plan_length,plan_robustness,total_time"<<std::endl;
+    std::string domain(argv[5]);
+    std::string problem(argv[6]);
+    // Solution plan, each on a line. Attributes not available are -1
+    for (size_t i=0; i<sols.size(); i++) {
+      outfile<<domain<<","<<problem<<","<<i+1<<","<<sols[i].length<<","<<1.0-sols[i].fail_prob<<","<<sols[i].time;
+      if (i < sols.size()-1) outfile<<std::endl;
+    }
+    // Close the output file
+    outfile.close();
+  }
+  return 0;
 }
